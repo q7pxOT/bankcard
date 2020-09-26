@@ -1,0 +1,62 @@
+<div class="layui-col-md12">
+<div class="layui-card">
+<div class="layui-card-header"><span>文章分类</span></div>
+<div class="layui-card-body">
+
+        <form class="layui-form" id="searchForm" onsubmit="return false;">
+            <div class="layui-form-item" style="margin-bottom:5px;">
+                <div class="layui-inline">
+                    <label class="layui-form-label" style="width:50px;">关键词</label>
+                    <div class="layui-input-inline" style="width:160px;">
+                        <input type="text" name="s_keyword" id="s_keyword" autocomplete="off" class="layui-input" placeholder="请输入关键词">
+                    </div>
+                </div>
+                <div class="layui-inline" style="margin-right:0;">
+                    <input type="hidden" name="is_download" id="is_download"/>
+                    <span class="layui-btn" id="searchBtn">查询</span>
+                    <!--<span class="layui-btn layui-btn-danger" id="downloadBtn">导出</span>-->
+                </div>
+            </div>
+        </form>
+
+        <table class="layui-hide" id="dataTable" lay-filter="dataTable"></table>
+        <!--记录操作工具条-->
+        <script type="text/html" id="barItemAct">
+            <!--<a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="check">审核</a>-->
+            /
+        </script>
+	
+</div>
+</div>
+</div>
+
+<script>
+$('#searchBtn').on('click',function(){
+	var obj=$(this);
+	var pdata={
+		s_keyword:$.trim($('#s_keyword').val())
+	};
+	dataPage({
+		where:pdata,
+        url:global.appurl+'c=News&a=arccat_list',
+        cols:[[
+            {field:'id', width:70, title: 'ID'},
+            {field:'cat_name', title: '分类名称'},
+            {field:'sort', title: '排序值'},
+            {field:'', width:80, title: '操作',toolbar:'#barItemAct'}
+        ]],
+        done:function(res, curr, count){
+            //console.log(res);
+        }
+	});
+});
+
+$('#s_keyword').on('keyup',function(e){
+	if(e.keyCode==13){
+		$('#searchBtn').trigger('click');
+	}
+});
+
+$('#searchBtn').trigger('click');
+
+</script>

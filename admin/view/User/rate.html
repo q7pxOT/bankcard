@@ -1,0 +1,301 @@
+<div class="layui-col-md12">
+<div class="layui-card">
+<div class="layui-card-header"><span>卡商分成比例</span></div>
+<div class="layui-card-body">
+	<form class="layui-form" id="searchForm" onsubmit="return false;">
+		<div class="layui-form-item" style="margin-bottom:5px;">
+			<!--
+			<div class="layui-inline">
+				<label class="layui-form-label" style="width:40px;">分组</label>
+				<div class="layui-input-inline" style="width:100px;text-align:left;">
+					<select id="s_gid">
+						<option value="0">全部</option>
+						[[foreach from=$sys_group item=vo key=skey]]
+						<option value="[[$skey]]">[[$vo]]</option>
+						[[/foreach]]
+					</select>
+				</div>
+			</div>
+			-->
+			<div class="layui-inline">
+				<label class="layui-form-label" style="width:50px;">关键词</label>
+				<div class="layui-input-inline" style="width:180px;">
+					<input type="text" name="s_keyword" id="s_keyword" autocomplete="off" class="layui-input" placeholder="请输入关键词">
+				</div>
+			</div>
+			<div class="layui-inline" style="margin-right:0;">
+				<input type="hidden" name="is_download" id="is_download"/>
+				<span class="layui-btn" id="searchBtn">查询</span>
+				<!--<span class="layui-btn layui-btn-danger" id="downloadBtn">导出</span>-->
+			</div>
+		</div>
+	</form>
+
+	<table class="layui-hide" id="dataTable" lay-filter="dataTable"></table>
+    <!--记录操作工具条-->
+    <script type="text/html" id="barItemAct">
+		{{#if(d.setrate==1){}}
+        <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="fyRate">设置分成</a>
+		{{#}else{}}
+		/
+		{{#}}}
+    </script>
+
+</div>
+</div>
+</div>
+
+<script type="text/html" id="layerTpl">
+	<form class="layui-form LayerForm" onsubmit="return false;">
+		<div class="layui-form-item layui-form-text" style="margin-bottom:0;">
+			<label class="layui-form-label">上级账号：</label>
+			<div class="layui-form-label" style="text-align:left;padding-left:0;">
+				{{d.item.up_account||'—'}}
+			</div>
+		</div>
+		<div class="layui-form-item layui-form-text" style="margin-bottom:0;">
+			<label class="layui-form-label">下级账号：</label>
+			<div class="layui-form-label" style="text-align:left;padding-left:0;">
+				{{d.item.account}}
+			</div>
+		</div>
+		{{#  layui.each(d.mtype_arr, function(index,item){}}
+			{{#if(item.is_open==1&&d.item.up_td_switch[item.id]>0){}}
+			<div class="layui-form-item">
+				<label class="layui-form-label">{{#if(index>1){}}&nbsp;{{#}else{}}分成比例：{{#}}}</label>
+				<div class="layui-inline">
+					<input type="text" placeholder="填写小数" autocomplete="off" class="layui-input fy_rate" data-mtype-id="{{item.id}}" data-up-rate="{{#if(d.item.up_fy_rate[item.id]){}}{{(d.item.up_fy_rate[item.id]*100).toFixed(2)}}{{#}else{}}0{{#}}}" data-up-account="{{d.item.up_account||''}}" style="width:120px;" value="{{#if(d.item.fy_rate[item.id]){}}{{(d.item.fy_rate[item.id]*100).toFixed(2)}}{{#}else{}}0{{#}}}" />
+					<span style="position:absolute;left:100px;top:10px;">%</span>
+				</div>
+				<span style="color:#f60;">【{{item.name}}】上级分成：{{#if(d.item.up_fy_rate[item.id]){}}{{(d.item.up_fy_rate[item.id]*100).toFixed(2)}}%{{#}else{}}未设置{{#}}}</span>
+			</div>
+			{{#}}}
+		{{#});}}
+		<div class="layui-form-item">
+			<div class="layui-input-block">
+				<input type="hidden" id="user_id" value="{{d.item.id}}" />
+				<span class="layui-btn" onclick="saveFyrate(this)">提交</span>
+				<div style="color:#f00;">设置下级的分成比例-小数，不得超过上级分成比例</div>
+			</div>
+		</div>
+	</form>
+</script>
+
+<script>
+
+var mtype_arr=jsonDecode('[[$mtype_arr|json_encode]]');
+
+$('#searchBtn').on('click',function(){
+    var obj=$(this);
+    var pdata={
+		s_keyword:$.trim($('#s_keyword').val()),
+		s_gid:$('#s_gid').val()
+    };
+    dataPage({
+        where:pdata,
+        url:global.appurl+'c=User&a=rate_list',
+        cols:[[
+            {field:'id', width:70, title: 'ID'},
+            {field:'gname', title: '分组'},
+            {field:'nickname', title: '卡商',templet:function(d){
+				return d.account+' / '+d.nickname;
+			}},
+            {field:'up_nickname', title: '上级',templet:function(d){
+				if(!d.up_nickname){
+					return '';
+				}
+				return d.up_account+' / '+d.up_nickname;
+			}},
+			{field:'fy_rate', title: '分成比例',style:'text-align:left;',width:700,templet:function(d){
+				var html='';
+				var idx=1;
+				if(d.switch==1){
+					html+='<form class="layui-form" action="#">';
+					for(var i in d.fy_rate){
+						if(mtype_arr[i].is_open!=1){
+							continue;
+						}
+						if(!d.up_td_switch[i]||d.up_td_switch[i]< 1){
+							continue;
+						}
+						var switch_flag='';
+						if(d.td_switch[i]==1){
+							switch_flag='checked';
+						}
+						if(d.fy_rate[i]){
+							fy_rate_i=(d.fy_rate[i]*100).toFixed(2);
+						}else{
+							fy_rate_i=0;
+						}
+						html+='<input type="checkbox" '+switch_flag+' value="'+d.id+'_'+i+'" lay-skin="primary" lay-filter="setPass" title="&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'+mtype_arr[i].name+'：'+fy_rate_i+'%"/>';
+						if(idx%4==0){
+							html+='<br>';
+						}else{
+							html+='&nbsp;&nbsp;';
+						}
+						idx++;
+					}
+					html+='</form>';
+				}else{
+					for(var i in d.fy_rate){
+						if(mtype_arr[i].is_open!=1){
+							continue;
+						}
+
+						if(d.td_switch[i]==undefined||d.td_switch[i]<1){
+							continue;
+						}
+						if(d.fy_rate[i]){
+							fy_rate_i=(d.fy_rate[i]*100).toFixed(2);
+						}else{
+							fy_rate_i=0;
+						}
+						html+=mtype_arr[i].name+'：<b style="color:#f30;">'+fy_rate_i+'%</b>';
+						if(idx%5==0){
+							html+='<br>';
+						}else{
+							html+='，';
+						}
+						idx++;
+					}
+					html=trim(html,'，');
+				}
+				return html;
+			}},
+            {field:'', width:120, title: '操作',toolbar:'#barItemAct'}
+        ]],
+        done:function(res, curr, count){
+            //console.log(res);
+        }
+    });
+});
+
+$('#s_keyword').on('keyup',function(e){
+    if(e.keyCode==13){
+        $('#searchBtn').trigger('click');
+    }
+});
+
+$('#searchBtn').trigger('click');
+
+////////////////////////////////////////////////////////
+//当前操作项
+var nowActItem=null;
+
+//监听工具条
+layui.table.on('tool(dataTable)', function(obj){
+    nowActItem=obj;
+    var item = obj.data;
+    var layEvent = obj.event;
+    var tr = obj.tr;
+
+    if(layEvent === 'apikeyBtn'){
+        layer.confirm('确定要生成么？',{title:'系统提示',icon: 3},function(index){
+            ajax({
+                url:global.appurl+'c=User&a=apikey_update',
+                data:{uid:item.id},
+                success:function(json){
+                    if(json.code!=1){
+                        _alert(json.msg);
+                        return;
+                    }
+					var uitem={apikey:json.data.apikey};
+					nowActItem.update(uitem);
+                    layer.close(index);
+                }
+            });
+        });
+    }else if(layEvent=='fyRate'){
+        layer.open({
+            title:'设置分成比例',
+            type: 1,
+            shadeClose: true,
+            area: global.screenType < 2 ? ['80%', '300px'] : ['540px', '600'],
+            content: layui.laytpl($('#layerTpl').html()).render({item:item,mtype_arr:mtype_arr}),
+            success:function(){
+				//
+				layui.form.render();
+            }
+        });
+	}
+});
+
+
+///////////////////////////////////////////////////////////////
+
+//保存分成比例
+function saveFyrate(ts){
+	var obj=$(ts);
+	var fy_rate={};
+	var msg='';
+	$('.fy_rate').each(function(i,o){
+		var iobj=$(o);
+		var mtype_id=iobj.attr('data-mtype-id');
+		var rate=(($.trim(iobj.val())*1)/100).toFixed(4);
+		var up_rate=((iobj.attr('data-up-rate')*1)/100).toFixed(4);
+		if(isNaN(up_rate)){
+			up_rate=0;
+		}
+		var up_account=iobj.attr('data-up-account');
+		if(!rate||rate.length<1||isNaN(rate)||rate<0||rate>1){
+			msg='【'+mtype_arr[mtype_id].name+'】设置的分成比例不正确';
+			return false;
+		}else{
+			if(up_account&&rate>up_rate){
+				msg='【'+mtype_arr[mtype_id].name+'】设置的分成比例超过了上级的';
+				return false;
+			}
+		}
+		fy_rate[mtype_id]=rate;
+	});
+	if(msg){
+		_alert(msg);
+		return;
+	}
+	var item_id=$('#user_id').val();
+	ajax({
+		url:global.appurl+'c=User&a=rate_update',
+		data:{item_id:item_id,fy_rate:fy_rate},
+		success:function(json){
+			_alert(json.msg);
+			if(json.code!=1){
+				return;
+			}
+			layer.closeAll('page');
+			//$('#searchBtn').trigger('click');
+			var uitem={
+				td_switch:json.data.td_switch,
+				fy_rate:json.data.fy_rate
+			};
+			nowActItem.update(uitem);
+			layui.form.render();
+		}
+	});
+}
+
+//设置通道开关
+layui.form.on('checkbox(setPass)', function(data){
+	//console.log(data.elem);
+	var obj=$(data.elem);
+	var uid_ptype=data.value;
+	var is_open;
+	if(data.elem.checked){
+		is_open=1;
+	}else{
+		is_open=0;
+	}
+	ajax({
+		url:global.appurl+'c=User&a=tdswitch2_update',
+		data:{uid_ptype:uid_ptype,is_open:is_open},
+		success:function(json){
+			if(json.code!=1){
+				_alert(json.msg);
+				layui.form.render('checkbox');
+				return;
+			}
+			//td_switch_set[json.data.uid]=json.data.td_switch;
+		}
+	});
+});
+
+</script>

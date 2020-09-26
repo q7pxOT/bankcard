@@ -1,0 +1,114 @@
+<style>
+.layui-form-label{width:100px;}
+.layui-input-block{margin-left:130px;}
+</style>
+<div class="layui-col-md12">
+<div class="layui-card">
+<div class="layui-card-header">
+	<span>API对接</span>
+</div>
+<div class="layui-card-body">
+	<form class="layui-form layui-col-lg6">
+		<div class="layui-form-item" style="margin-bottom:2px;">
+			<label class="layui-form-label">商户账号：</label>
+			<div class="layui-input-block" style="line-height:38px;">
+				[[$user.account]]
+			</div>
+		</div>
+		<div class="layui-form-item" style="margin-bottom:2px;">
+			<label class="layui-form-label">签名密钥：</label>
+			<div class="layui-input-block" style="line-height:38px;">
+				[[if $user.apikey]]
+				[[$user.apikey]]
+				[[else]]
+				未生成
+				[[/if]]
+			</div>
+		</div>
+		<div class="layui-form-item" style="margin-bottom:2px;">
+			<label class="layui-form-label">下单网关地址：</label>
+			<div class="layui-input-block" style="line-height:38px;">
+				[[$smarty.server.REQUEST_SCHEME]]://[[$smarty.server.HTTP_HOST]]/?c=Pay
+			</div>
+		</div>
+		<div class="layui-form-item rsaItem" style="[[if !$user.is_rsa]]display:none;[[/if]]">
+			<label class="layui-form-label">平台RSA公钥：</label>
+			<div class="layui-input-block">
+				<textarea class="layui-textarea" style="height:160px;resize:none;" readonly>[['rsa_pt_public'|getConfig]]</textarea>
+			</div>
+		</div>
+		<div class="layui-form-item rsaItem" style="[[if !$user.is_rsa]]display:none;[[/if]]">
+			<label class="layui-form-label">商户RSA公钥：</label>
+			<div class="layui-input-block">
+				<textarea class="layui-textarea" id="rsa_public" style="height:160px;resize:none;" placeholder="复制生成的RSA公钥">[[$user.rsa_public]]</textarea>
+			</div>
+		</div>
+		
+		<div class="layui-form-item">
+			<label class="layui-form-label">二级密码：</label>
+			<div class="layui-input-block" style="width:40%;">
+				<input type="password" id="password2" autocomplete="off" placeholder="" class="layui-input">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">&nbsp;</label>
+			<div class="layui-input-block">
+				<span class="layui-btn layui-btn-normal saveBtn">提交保存</span>
+			</div>
+		</div>
+		
+	</form>
+	
+	<div style="height:50px;clear:both;"></div>
+</div>
+</div>
+</div>
+
+<script>
+
+layui.form.on('radio(is_rsa)', function(data){
+	if(data.value==1){
+		$('.rsaItem').show();
+	}else{
+		$('.rsaItem').hide();
+	}
+});
+
+$('.saveBtn').on('click',function(){
+	var obj=$(this);
+	var rsa_public=$.trim($('#rsa_public').val());
+	var password2=$.trim($('#password2').val());
+	var is_rsa=$('input[name="is_rsa"]:checked').val();
+	if(!rsa_public){
+		_alert('请填写您的RSA公钥');
+		return false;
+	}
+	if(!password2){
+		_alert('请填写二级密码');
+		return false;
+	}
+	password2=md5(password2);
+	var has_click=obj.attr('has-click');
+	if(has_click=='1'){
+		return false;
+	}else{
+		obj.attr('has-click','1');
+	}
+	ajax({
+		url:global.appurl+'c=User&a=rsaset_update',
+		data:{rsa_public:rsa_public,password2:password2,is_rsa:1},
+		success:function(json){
+			if(json.code!='1'){
+				obj.attr('has-click','0');
+				_alert(json.msg);
+				return false;
+			}
+			_alert(json.msg,{},function(){
+				location.reload();
+			});
+		}
+	});
+});
+
+
+</script>

@@ -1,0 +1,689 @@
+<div class="layui-col-md12">
+<div class="layui-card">
+<div class="layui-card-header">
+	<span>卡商列表</span>
+	<span class="layui-btn layui-btn-sm layui-btn-normal addBtn">+添加卡商</span>
+</div>
+<div class="layui-card-body">
+
+
+    <form class="layui-form" id="searchForm" action="">
+        <div class="layui-form-item" style="margin-bottom:5px;">
+			<div class="layui-inline" style="margin-right:0;">
+				<label class="layui-form-label" style="width:30px;">开始</label>
+				<div class="layui-input-inline" style="width:120px;">
+					<input name="s_start_time" id="s_start_time" class="layui-input" placeholder="请选择" />
+				</div>
+			</div>
+            <div class="layui-inline">
+                <label class="layui-form-label" style="width:40px;">分组</label>
+                <div class="layui-input-inline" style="width:80px;">
+					<select id="s_gid" name="s_gid">
+						<option value="0">全部</option>
+						[[foreach from=$sys_group item=vo key=skey]]
+						<option value="[[$skey]]">[[$vo]]</option>
+						[[/foreach]]
+					</select>
+                </div>
+            </div>
+
+            <div class="layui-inline">
+                <label class="layui-form-label" style="width:50px;">接单</label>
+                <div class="layui-input-inline" style="width:80px;">
+					<select id="s_is_online" name="s_is_online">
+						<option value="all">全部</option>
+						[[foreach from='yes_or_no'|getConfig item=vo key=skey]]
+						<option value="[[$skey]]">[[$vo]]</option>
+						[[/foreach]]
+					</select>
+                </div>
+            </div>
+
+            <div class="layui-inline">
+                <label class="layui-form-label" style="width:60px;">搜索团队</label>
+                <div class="layui-input-inline" style="width:160px;">
+                    <input type="text" name="s_keyword2" id="s_keyword2" autocomplete="off" class="layui-input" placeholder="请输入">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" style="width:50px;">关键词</label>
+                <div class="layui-input-inline" style="width:160px;">
+                    <input type="text" name="s_keyword" id="s_keyword" autocomplete="off" class="layui-input" placeholder="请输入关键词">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <div class="layui-input-inline">
+                <span class="layui-btn" id="searchBtn">查询</span>
+                <!--<span class="layui-btn layui-btn-danger">导出</span>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <table class="layui-hide" id="dataTable" lay-filter="dataTable"></table>
+    <!--记录操作工具条-->
+    <script type="text/html" id="barItemAct">
+        {{#if(d.del==1){}}
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+        {{#}}}
+        {{#if(d.kick==1){}}
+        <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="kick">踢下线</a>
+        {{#}}}
+        {{#if(d.login_sole==1){}}
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="qingkong">清空唯一码</a>
+        {{#}}}
+        {{#if(d.edit==1){}}
+        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="edit">编辑</a>
+        {{#}}}
+		{{#if(d.pay==1){}}
+		<a class="layui-btn layui-btn-xs" lay-event="pay">充值</a>
+		{{#}}}
+    </script>
+	
+</div>
+</div>
+</div>
+
+<!--弹层-->
+<script type="text/html" id="layerTpl">
+	<form class="layui-form LayerForm" onsubmit="return false;">
+		<div class="layui-form-item">
+			<label class="layui-form-label">账号：</label>
+			<div class="layui-input-block">
+				<input type="text" id="account" placeholder="" autocomplete = 'off' class="layui-input" disabled  value="{{d.item.account||''}}" />
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">登录密码：</label>
+			<div class="layui-input-block">
+				<input type="password" id="password" placeholder="" autocomplete = 'new-password' class="layui-input" />
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">二级密码：</label>
+			<div class="layui-input-block">
+				<input type="password" id="password2" placeholder="" autocomplete = 'new-password' class="layui-input" />
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">手机号：</label>
+			<div class="layui-input-block">
+				<input type="text" id="phone" placeholder="绑定的手机号不填则忽略" autocomplete="off" class="layui-input" value="{{d.item.phone||''}}" />
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">分组：</label>
+			<div class="layui-input-block" style="width:120px;">
+				<select id="gid">
+					<option value="0">请选择分组</option>
+					[[foreach from=$sys_group item=vo key=skey]]
+					<option value="[[$skey]]">[[$vo]]</option>
+					[[/foreach]]
+				</select>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">邀请人：</label>
+			<div class="layui-input-block">
+				<input type="text" id="paccount" placeholder="邀请人账号不填则忽略" autocomplete="off" class="layui-input" [[if $user.gid gt 41]]disabled value="{{d.item.paccount||'[[$user.account]]'}}"[[else]]value="{{d.item.paccount||''}}"[[/if]] />
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">姓名：</label>
+			<div class="layui-input-block">
+				<input type="text" id="realname" placeholder="" autocomplete="off" class="layui-input" value="{{d.item.realname||''}}" />
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">昵称：</label>
+			<div class="layui-input-block">
+				<input type="text" id="nickname" placeholder="" autocomplete="off" class="layui-input" value="{{d.item.nickname||''}}" />
+			</div>
+		</div>
+		<div class="layui-form-item"  style="margin-bottom:0;">
+			<label class="layui-form-label">回款限制：</label>
+			<div class="layui-input-block">
+				<input type="text" id="hk_is_money" placeholder="" autocomplete="off" class="layui-input" value="{{d.item.hk_is_money||''}}" />
+			</div>
+		</div>
+		<div class="layui-form-item" style="margin-bottom:0;">
+			<label class="layui-form-label">模式：</label>
+			<div class="layui-input-block">
+				[[foreach from='cnf_ms_model'|getConfig item=vo key=skey]]
+				<input type="radio" name="model" value="[[$skey]]" title="[[$vo]]" [[if $model eq $skey]]checked[[/if]]>
+				[[/foreach]]
+				<span style="font-weight:bold;color:#f30;position:relative;top:4px;">每个账号只可设置一次</span>
+			</div>
+		</div>
+		[[if $user.gid eq 1]]
+		<div class="layui-form-item" style="margin-bottom:0;">
+			<label class="layui-form-label">接单：</label>
+			<div class="layui-input-block">
+				[[foreach from='yes_or_no'|getConfig item=vo key=skey]]
+				<input type="radio" name="is_online" value="[[$skey]]" title="[[$vo]]" [[if !$skey]]checked[[/if]]>
+				[[/foreach]]
+			</div>
+		</div>
+		<div class="layui-form-item" style="margin-bottom:0;">
+			<label class="layui-form-label">谷歌验证：</label>
+			<div class="layui-input-block">
+				[[foreach from='sys_switch'|getConfig item=vo key=skey]]
+				<input type="radio" name="is_google" value="[[$skey]]" title="[[$vo]]" [[if !$skey]]checked[[/if]]>
+				[[/foreach]]
+				<input type="radio" name="is_google" value="2" title="重置谷歌密钥">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">状态：</label>
+			<div class="layui-input-block">
+				<input type="radio" name="status" value="1" title="禁用" lay-filter="stauts">
+				<input type="radio" name="status" value="2" title="正常" checked="checked" lay-filter="stauts">
+			</div>
+		</div>
+		<div class="layui-form-item forbidItem" style="display:none;">
+			<label class="layui-form-label">禁用时间：</label>
+			<div class="layui-input-block" style="width:120px;">
+				<select id="forbid_time_flag">
+					[[foreach from='cnf_forbid_time'|getConfig item=vo key=skey]]
+					<option value="[[$skey]]">[[$vo]]</option>
+					[[/foreach]]
+				</select>
+			</div>
+		</div>
+		<div class="layui-form-item forbidItem" style="display:none;">
+			<label class="layui-form-label">禁用说明：</label>
+			<div class="layui-input-block">
+				<textarea id="forbid_msg" placeholder="" class="layui-textarea" style="min-height:60px;" value="{{d.item.forbid_msg||''}}"></textarea>
+			</div>
+		</div>
+		[[/if]]
+		<div class="layui-form-item">
+			<div class="layui-input-block">
+				<input type="hidden" id="item_id" value="{{d.item.id}}" />
+				<span class="layui-btn" onclick="saveBtn(this)">提交保存</span>
+			</div>
+		</div>
+	</form>
+</script>
+
+<script type="text/html" id="layerTpl3">
+	<form class="layui-form LayerForm" onsubmit="return false;">
+		<div class="layui-form-item layui-form-text" style="margin-bottom:0;">
+			<label class="layui-form-label">账号：</label>
+			<div class="layui-form-label userNicknameTxt" style="text-align:left;padding-left:0;width:300px;">
+				{{d.item.account}} <b style="color:#f30;">【{{d.item.model_flag}}】</b>
+			</div>
+		</div>
+		<div class="layui-form-item layui-form-text" style="margin-bottom:0;">
+			<label class="layui-form-label">可提余额：</label>
+			<div class="layui-form-label userNicknameTxt" style="text-align:left;padding-left:0;">
+				{{d.item.balance}}
+			</div>
+		</div>
+		<div class="layui-form-item layui-form-text" style="margin-bottom:0;">
+			<label class="layui-form-label">冻结余额：</label>
+			<div class="layui-form-label userNicknameTxt" style="text-align:left;padding-left:0;">
+				{{d.item.fz_balance}}
+			</div>
+		</div>
+		<div class="layui-form-item layui-form-text" style="margin-bottom:0;">
+			<label class="layui-form-label">接单余额：</label>
+			<div class="layui-form-label userNicknameTxt" style="text-align:left;padding-left:0;">
+				{{d.item.sx_balance}}
+			</div>
+		</div>
+		<div class="layui-form-item layui-form-text" style="margin-bottom:0;">
+			<label class="layui-form-label">应回款：</label>
+			<div class="layui-form-label userNicknameTxt" style="text-align:left;padding-left:0;">
+				{{d.item.kb_balance}}
+			</div>
+		</div>
+		<div class="layui-form-item" style="margin-bottom:0;">
+			<label class="layui-form-label">充值类型：</label>
+			<div class="layui-input-block">
+				[[if $user.gid lt 41]]
+				<input type="radio" name="ptype" value="1" title="可提余额" checked="checked">
+				<input type="radio" name="ptype" value="2" title="冻结余额">
+				<input type="radio" name="ptype" value="3" title="接单余额">
+				<input type="radio" name="ptype" value="4" title="应回款">
+				[[else]]
+				<input type="radio" name="ptype" value="3" title="接单余额" checked="checked">
+				[[/if]]
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">额度：</label>
+			<div class="layui-inline">
+				<input type="text" id="money" placeholder="" autocomplete="off" class="layui-input" />
+				[[if $user.gid lt 41]]
+				<span style="color:#f60;">充值正数为增加，负数为扣除</span>
+				[[else]]
+				<span style="color:#f60;">我的接单余额：<span class="upSxBalance">0</span></span>
+				[[/if]]
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">备注：</label>
+			<div class="layui-inline" style="width:70%;">
+				<textarea id="remark" class="layui-textarea"></textarea>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">二级密码：</label>
+			<div class="layui-inline" style="width:70%;">
+				<input type="password" id="paypwd2" placeholder="" autocomplete="off" class="layui-input" />
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<div class="layui-input-block">
+				<input type="hidden" id="user_id" value="{{d.item.id}}" />
+				<span class="layui-btn" onclick="paySaveBtn(this)">提交</span>
+			</div>
+		</div>
+	</form>
+</script>
+
+
+<script>
+
+var up_sx_balance='[[$user.sx_balance]]'*1;
+
+$('#searchBtn').on('click',function(){
+	var obj=$(this);
+	var pdata={
+		s_keyword:$.trim($('#s_keyword').val()),
+		s_keyword2:$.trim($('#s_keyword2').val()),
+		s_gid:$('#s_gid').val(),
+		s_msgid:1,
+		s_start_time:$.trim($('#s_start_time').val()),
+		s_is_online:$('#s_is_online').val(),
+	};
+	dataPage({
+		where:pdata,
+        url:global.appurl+'c=User&a=user_list',
+        cols:[[
+            {field:'id', width:70, title: 'ID'},
+			/*
+            {field:'nickname',width:130, title: '用户',align:'left',style:'text-align:left;',templet:function(d){
+                return '<img style="height:40px;" src="'+d.headimgurl+'"/> '+d.nickname;
+            }},*/
+			{field:'gname',width:90, title: '分组'},
+            {field:'account',width:120, title: '账号/昵称',templet:function(d){
+				return d.account+'<br>'+d.nickname;
+			}},
+            {field:'phone',width:120, title: '手机号/邀请码',templet:function(d){
+				var html='<div>'+d.phone+'</div>';
+				html+='<div>'+d.icode+'</div>';
+				return html;
+			}},
+			{field:'model_flag',width:90, title: '模式'},
+            {field:'paccount',width:120,title: '邀请人',templet:function(d){
+                if(d.paccount||d.prealname){
+                    return d.prealname+'<br>'+d.paccount;
+                }else{
+                    return '';
+                }
+            }},
+            //{field:'icode',width:80,title: '邀请码'},
+            {field:'balance',width:120, title: '可提余额'},
+            {field:'sx_balance',width:120, title: '接单余额'},
+            {field:'fz_balance',width:120, title: '冻结中'},
+			{field:'kb_balance',width:120, title: '应回款'},
+			{field:'hk_is_money',width:120, title: '回款限制'},
+			{field:'yong_money',width:120, title: '累计佣金',templet:function(d){
+				if(!d.yong_money){
+					return '0';
+				}
+				return d.yong_money;
+			}},
+            {field:'td_money',width:240,title: '今日收款',templet:function(d){
+				if(d.gid!=91){
+					return '/';
+				}
+				var html='<div style="text-align:left;line-height:18px;">';
+					html+='<div>金额：<b>'+d.td_money_ok+'</b> / <b>'+d.td_money+'</b></div>';
+					html+='<div>订单：<b>'+d.td_cnt_ok+'</b> / <b>'+d.td_cnt+'</b></div>';
+					html+='<div>成功：<b>'+d.td_percent+'<b></div>';
+				html+='</div>';
+				return html;
+			}},
+            {field:'all_money',width:240,title: '累计收款',templet:function(d){
+				if(d.gid!=91){
+					return '/';
+				}
+				var html='<div style="text-align:left;line-height:18px;">';
+					html+='<div>金额：<b>'+d.all_money_ok+'</b> / <b>'+d.all_money+'</b></div>';
+					html+='<div>订单：<b>'+d.all_cnt_ok+'</b> / <b>'+d.all_cnt+'</b></div>';
+					html+='<div>成功：<b>'+d.all_percent+'<b></div>';
+				html+='</div>';
+				return html;
+			}},
+            //{field:'reg_time',width:130, title: '注册时间'},
+            {field:'status_flag',width:80, title: '状态'},
+			{field:'is_online_flag',width:80, title: '接单'},
+            {field:'', width:350,title: '操作',toolbar:'#barItemAct'}
+        ]],
+        done:function(res, curr, count){
+            //console.log(res);
+            if($('.sumLine').length<1){
+                var html='<div class="sumLine">';
+						html+='<span>用户数：'+res.odata.count+'</span>';
+						html+='<span>可提余额：'+res.odata.balance+'</span>';
+						html+='<span>接单余额：'+res.odata.sx_balance+'</span>';
+						html+='<span>应回款：'+res.odata.kb_balance+'</span>';
+						//html+='<span>回款限制：'+res.odata.hk_is_money+'</span>';
+				html+='</div>';
+				$('.layui-table-page').before(html);
+            }
+        }
+	});
+});
+
+$('#searchBtn').trigger('click');
+
+$('#s_keyword').on('keyup',function(e){
+	if(e.keyCode==13){
+		$('#searchBtn').trigger('click');
+	}
+});
+
+////////////////////////////////////////////////////////
+
+layui.form.on('radio(stauts)', function(data){
+	if(data.value==1){
+		$('.forbidItem').show();
+	}else{
+		$('.forbidItem').hide();
+	}
+});  
+
+
+//当前操作项
+var nowActItem=null;
+
+//监听工具条
+layui.table.on('tool(dataTable)', function(obj){
+    nowActItem=obj;
+    var item = obj.data;
+    var layEvent = obj.event;
+    var tr = obj.tr;
+ 
+    if(layEvent === 'del'){ //删除
+        layer.confirm('确定要删除么？',{title:'系统提示',icon: 3},function(index){
+            ajax({
+                url:global.appurl+'c=User&a=user_delete',
+                data:{item_id:item.id},
+                success:function(json){
+                    if(json.code!=1){
+                        _alert(json.msg);
+                        return;
+                    }
+                    obj.del();
+                    layer.close(index);
+                }
+            });
+        });
+    } else if(layEvent === 'edit'){ //编辑
+        updateView(obj);
+    } else if(layEvent === 'qingkong'){ //清空
+        layer.confirm('确定要清空么？',{title:'系统提示',icon: 3},function(index){
+            ajax({
+                url:global.appurl+'c=User&a=user_desoles',
+                data:{item_id:item.id},
+                success:function(json){
+                    if(json.code!=1){
+                        _alert(json.msg);
+                        return;
+                    }
+                    _alert(json.msg);
+                }
+            });
+        });
+    }else if(layEvent=='kick'){//踢下线
+        layer.confirm('确定要踢下线么？',{title:'系统提示',icon: 3},function(index){
+            ajax({
+                url:global.appurl+'c=User&a=user_kick',
+                data:{item_id:item.id},
+                success:function(json){
+                    _alert(json.msg);
+                    if(json.code!=1){
+                        return;
+                    }
+                    layer.close(index);
+                }
+            });
+        });
+    }else if(layEvent=='pay'){//充值赠送
+        layer.open({
+            title:'充值',
+            type: 1,
+            shadeClose: true,
+            area: global.screenType < 2 ? ['80%', '300px'] : ['610px','630px'],
+            content: layui.laytpl($('#layerTpl3').html()).render({item:item}),
+            success:function(){
+				$('.upSxBalance').text(up_sx_balance);
+				layui.form.render();
+            }
+        });
+    }
+});
+
+function updateView(obj){
+    var item={};
+    if(obj&&obj.data){
+        item=obj.data;
+        var title='编辑卡商';
+    }else{
+        var title='添加卡商';
+    }
+    layer.open({
+        title:title,
+        type: 1,
+        shadeClose: true,
+        area: global.screenType < 2 ? ['80%', '300px'] : ['560px', '725px'],
+        content: layui.laytpl($('#layerTpl').html()).render({item:item}),
+        success:function(){
+			
+            $('#account').prop('disabled',false);
+            if(obj&&obj.data){
+                $('input[name="status"][value="'+item.status+'"]').attr('checked',true);
+                $('input[name="is_online"][value="'+item.is_online+'"]').attr('checked',true);
+                $('input[name="is_google"][value="'+item.is_google+'"]').attr('checked',true);
+                $('#forbid_time_flag').val(item.forbid_time_flag);
+                $('#forbid_msg').val(item.forbid_msg);
+                $('#gid').val(item.gid);
+                $('#account').prop('disabled',true);
+				if(item.status==1){
+					$('.forbidItem').show();
+				}
+				if(item.model_ori>0){
+					$('input[name="model"][value="'+item.model+'"]').attr('checked',true);
+					$('input[name="model"]').prop('disabled',true);
+				}
+            }else{
+				$('input[name="model"]').prop('disabled',false);
+			}
+            layui.form.render();
+        }
+    });
+}
+////////////////////////////////////////////////////////
+
+$('.addBtn').on('click',function(){
+    updateView(null);
+});
+
+
+
+//保存更新
+function saveBtn(ts){
+	var obj=$(ts);
+	var item_id=$('#item_id').val()*1;
+	var i_index=$('#item_id').attr('i-index');
+	var account=$.trim($('#account').val());
+	var paccount=$.trim($('#paccount').val());
+	var password=$.trim($('#password').val());
+	var password2=$.trim($('#password2').val());
+	var phone=$.trim($('#phone').val());
+	var realname=$.trim($('#realname').val());
+	var nickname=$.trim($('#nickname').val());
+	var forbid_time_flag=$.trim($('#forbid_time_flag').val());
+	var forbid_msg=$.trim($('#forbid_msg').val());
+	var gid=$.trim($('#gid').val());
+	var hkismoney=$.trim($('#hk_is_money').val());
+	var is_online=$('input[name="is_online"]:checked').val();
+	var is_google=$('input[name="is_google"]:checked').val();
+	var status=$('input[name="status"]:checked').val();
+	var model=$('input[name="model"]:checked').val();
+	if(!item_id||isNaN(item_id)){
+		if(!account){
+			_alert('请填写账号');
+			return false;
+		}
+	}
+	if(gid<1){
+		_alert('请选择用户分组');
+		return false;
+	}
+	if(!realname){
+		_alert('请填写姓名');
+		return false;
+	}
+	if(!nickname){
+		_alert('请填写昵称');
+		return false;
+	}
+	if(password){
+		password=md5(password);
+	}
+	if(password2){
+		password2=md5(password2);
+	}
+	var has_click=obj.attr('has-click');
+	if(has_click=='1'){
+		return false;
+	}else{
+		obj.attr('has-click','1');
+	}
+	ajax({
+		url:global.appurl+'c=User&a=user_update',
+		data:{
+			item_id:item_id,gid:gid,status:status,is_online:is_online,is_google:is_google,
+			account:account,paccount:paccount,
+			realname:realname,nickname:nickname,phone:phone,password:password,password2:password2,
+			forbid_time_flag:forbid_time_flag,forbid_msg:forbid_msg,hkismoney:hkismoney,
+			model:model
+		},
+		success:function(json){
+			_alert(json.msg);
+			obj.attr('has-click','0');
+			if(json.code!='1'){
+				return false;
+			}
+			layer.closeAll('page');
+
+			if(!item_id||item_id=='undefined'||isNaN(item_id)){
+				$('#searchBtn').trigger('click');//重新加载
+			}else{
+                //同步更新
+                var uitem={
+                    realname: realname,
+                    nickname: nickname,
+                    forbid_time_flag: forbid_time_flag,
+                    forbid_msg: forbid_msg,
+                    gid: gid,
+                    gname: $('#gid').find('option[value="'+gid+'"]').text()
+                }
+                if(paccount){
+                    uitem.paccount=paccount;
+                    uitem.prealname=json.data.prealname;
+                }
+                if(phone){
+                    uitem.phone=phone;
+                }
+				if(is_google!=undefined&&is_google<2){
+					uitem.is_google=is_google;
+				}
+                if(status){
+                    uitem.status=status;
+                    uitem.status_flag=$('input[name="status"][value="'+status+'"]').attr('title');
+                }
+				uitem.is_online=is_online;
+				uitem.is_online_flag=$('input[name="is_online"][value="'+is_online+'"]').attr('title');
+				uitem.model_ori=json.data.model;
+				uitem.model=json.data.model;
+				uitem.model_flag=json.data.model_flag;
+                nowActItem.update(uitem);
+			}
+		}
+	});
+}
+
+
+
+//导出操作
+$('#downloadBtn').on('click',function(){
+	$('#is_download').val(1);
+	var params=$('#searchForm').serialize();
+	var url='[[$smarty.const.APP_URL]]?c=User&a=user_list&'+params;
+	window.open(url,'_blank');
+	$('#is_download').val(0);
+});
+
+///////////////////////////////////////////////////////////////
+
+//充值保存
+function paySaveBtn(ts){
+	var obj=$(ts);
+	var ptype=$('input[name="ptype"]:checked').val();
+	var uid=$('#user_id').val();
+	var money=$.trim($('#money').val());
+	var remark=$.trim($('#remark').val());
+	var password2=$.trim($('#paypwd2').val());
+	if(!money){
+		_alert('请填写额度');
+		return;
+	}else if(money==0){
+		_alert('额度不能为0');
+		return;
+	}
+	var has_click=obj.attr('has-click');
+	if(has_click=='1'){
+		return;
+	}else{
+		obj.attr('has-click','1');
+	}
+	password2=md5(password2);
+	ajax({
+		url:global.appurl+'c=User&a=pay_balance',
+		data:{uid:uid,money:money,ptype:ptype,remark:remark,password2:password2},
+		success:function(json){
+            obj.attr('has-click','0');
+            _alert(json.msg);
+			if(json.code!=1){
+				return;
+			}
+			layer.closeAll('page');
+			var uitem={};
+			if(ptype==1){
+				uitem.balance=json.data.balance;
+			}else if(ptype==2){
+				uitem.fz_balance=json.data.fz_balance;
+			}else if(ptype==3){
+				uitem.sx_balance=json.data.sx_balance;
+				if(up_sx_balance>=0){
+					up_sx_balance=up_sx_balance-money;
+					$('.upSxBalance').text(up_sx_balance);
+				}
+			}else if(ptype==4){
+				uitem.kb_balance=json.data.kb_balance;
+			}else{
+				return;
+			}
+			nowActItem.update(uitem);
+		}
+	});
+}
+
+
+</script>

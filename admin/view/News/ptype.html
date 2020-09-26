@@ -1,0 +1,359 @@
+<style>
+.imgItemBtn{cursor:pointer;}
+.banner_it{width:80px;height:80px;background-size:cover;border:1px solid #dedede;
+line-height:80px;margin-right:5px;display:inline-block;float:left;text-align:center;font-size:4rem;cursor:pointer;
+position:relative;}
+.bannerItemCancel{position:absolute;right:0px;top:0px;font-size:30px;line-height:30px;background:rgba(11,11,11,0.5);color:#fff;}
+</style>
+
+<div class="layui-col-md12">
+<div class="layui-card">
+<div class="layui-card-header"><span>支付通道</span><span class="layui-btn layui-btn-sm layui-btn-normal addBtn">+添加通道</span></div>
+<div class="layui-card-body">
+
+
+        <form class="layui-form" id="searchForm" onsubmit="return false;">
+            <div class="layui-form-item" style="margin-bottom:5px;">
+                <div class="layui-inline">
+                    <label class="layui-form-label" style="width:50px;">关键词</label>
+                    <div class="layui-input-inline" style="width:180px;">
+                        <input type="text" name="s_keyword" id="s_keyword" autocomplete="off" class="layui-input" placeholder="请输入关键词">
+                    </div>
+                </div>
+                <div class="layui-inline" style="margin-right:0;">
+                    <input type="hidden" name="is_download" id="is_download"/>
+                    <span class="layui-btn" id="searchBtn">查询</span>
+                    <!--<span class="layui-btn layui-btn-danger" id="downloadBtn">导出</span>-->
+                </div>
+            </div>
+        </form>
+
+        <table class="layui-hide" id="dataTable" lay-filter="dataTable"></table>
+        <!--记录操作工具条-->
+        <script type="text/html" id="barItemAct">
+            <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+            <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="edit">编辑</a>
+        </script>
+	
+</div>
+</div>
+</div>
+
+<!--弹层-->
+<script type="text/html" id="layerTpl">
+	<form class="layui-form LayerForm" onsubmit="return false;">
+		<div class="layui-form-item">
+			<label class="layui-form-label" style="font-size:13px;">通道代码：</label>
+			<div class="layui-input-block">
+				<input type="text" id="ptype" placeholder="" autocomplete="off" class="layui-input" value="{{d.item.ptype||''}}" />
+			</div>
+		</div>
+		<div class="layui-form-item layui-form-text">
+			<label class="layui-form-label">通道名称：</label>
+			<div class="layui-input-block">
+				<input type="text" id="name" placeholder="" autocomplete="off" class="layui-input" value="{{d.item.name||''}}" />
+			</div>
+		</div>
+		<div class="layui-form-item layui-form-text">
+			<label class="layui-form-label">通道别称：</label>
+			<div class="layui-input-block">
+				<input type="text" id="aname" placeholder="" autocomplete="off" class="layui-input" value="{{d.item.aname||''}}" />
+			</div>
+		</div>
+		<div class="layui-form-item layui-form-text" style="margin-bottom:0;">
+			<label class="layui-form-label">排序值：</label>
+			<div class="layui-input-block">
+				<input type="text" id="sort" placeholder="数字" autocomplete="off" class="layui-input" value="{{d.item.sort||''}}" />
+				<span style="color:#f60;">从大到小</span>
+			</div>
+		</div>
+		<div class="layui-form-item" style="margin-bottom:0;">
+			<label class="layui-form-label">通道图标：</label>
+			<div class="layui-input-block">
+				<div class="layui-upload">
+					<div class="layui-upload-list" id="coverImgBtn" title="点击修改" style="background-image:url(/{{d.item.cover}});display:inline-block;cursor:pointer;width:60px;height:60px;line-height:60px;text-align:center;border:1px solid #dedede;background-size:cover;background-color:#eee;">
+						<i class="layui-icon" style="font-size:30px;">&#xe654;</i>
+						<input type="hidden" id="cover" value="{{d.item.cover||''}}"/>
+					</div>
+					<div style="color:#f60;display:inline-block;">建议尺寸120×120</div>
+				</div>
+			</div>
+		</div>
+		<div class="layui-form-item" style="margin-bottom:0;">
+			<label class="layui-form-label">弹出图片：</label>
+			<div class="layui-input-block">
+				<div class="layui-upload">
+					<div class="layui-upload-list" id="bannerImgBtn" title="点击修改" style="background-image:url(/{{d.item.banner}});display:inline-block;cursor:pointer;width:60px;height:60px;line-height:60px;text-align:center;border:1px solid #dedede;background-size:cover;background-color:#eee;">
+						<i class="layui-icon" style="font-size:30px;">&#xe654;</i>
+						<input type="hidden" id="banner" value="{{d.item.banner||''}}"/>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div class="layui-form-item" style="margin-bottom:0;">
+			<label class="layui-form-label">需要通道：</label>
+			<div class="layui-input-block">
+				[[foreach from='yes_or_no'|getConfig item=vo key=skey]]
+				<input type="radio" name="is_pass" value="[[$skey]]" title="[[$vo]]" [[if $skey gt 0]]checked="checked"[[/if]] />
+				[[/foreach]]
+			</div>
+		</div>
+		<div class="layui-form-item" style="margin-bottom:0;">
+			<label class="layui-form-label">表单提交：</label>
+			<div class="layui-input-block">
+                [[foreach from='yes_or_no'|getConfig item=vo key=skey]]
+                <input type="radio" name="is_form" value="[[$skey]]" title="[[$vo]]" [[if $skey gt 0]]checked="checked"[[/if]] />
+				[[/foreach]]
+			</div>
+		</div>
+		<div class="layui-form-item" style="margin-bottom:0;">
+			<label class="layui-form-label">用二维码：</label>
+			<div class="layui-input-block">
+                [[foreach from='yes_or_no'|getConfig item=vo key=skey]]
+                <input type="radio" name="is_qrcode" value="[[$skey]]" title="[[$vo]]" [[if $skey eq 0]]checked="checked"[[/if]] />
+				[[/foreach]]
+			</div>
+		</div>
+		<div class="layui-form-item" style="margin-bottom:0;">
+			<label class="layui-form-label">默认勾选：</label>
+			<div class="layui-input-block">
+                [[foreach from='yes_or_no'|getConfig item=vo key=skey]]
+                <input type="radio" name="is_default" value="[[$skey]]" title="[[$vo]]" [[if $skey eq 0]]checked="checked"[[/if]] />
+				[[/foreach]]
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">开放显示：</label>
+			<div class="layui-input-block">
+                [[foreach from='yes_or_no'|getConfig item=vo key=skey]]
+                <input type="radio" name="is_open" value="[[$skey]]" title="[[$vo]]" [[if $skey eq 0]]checked="checked"[[/if]] />
+				[[/foreach]]
+			</div>
+		</div>
+		
+		<div class="layui-form-item">
+			<div class="layui-input-block">
+				<input type="hidden" id="item_id" value="{{d.item.id||''}}" />
+				<span class="layui-btn" onclick="saveBtn(this)">提交保存</span>
+			</div>
+		</div>
+	</form>
+</script>
+
+
+<script>
+
+$('#searchBtn').on('click',function(){
+    var obj=$(this);
+    var pdata={
+        s_keyword:$.trim($('#s_keyword').val())
+    };
+    dataPage({
+        where:pdata,
+        url:global.appurl+'c=News&a=ptype_list',
+        cols:[[
+            {field:'id', width:70, title: 'ID'},
+            {field:'name', title: '名称'},
+            {field:'aname', title: '别称'},
+            {field:'ptype', title: '通道代码'},
+            {field:'cover', title: '图标',templet:function(d){
+                return '<img class="imgItemBtn" onclick="showImg(this)" style="height:60px;" src="/'+d.cover+'"/>';
+            }},
+            {field:'banner', title: '弹出图片',templet:function(d){
+                if(!d.banner){
+                    return '';
+                }
+                return '<img class="imgItemBtn" onclick="showImg(this)" style="height:60px;" src="/'+d.banner+'"/>';
+            }},
+            {field:'sort', title: '排序值(从大到小)'},
+            {field:'is_qrcode_flag', title: '用二维码'},
+            {field:'is_pass_flag', title: '需要通道'},
+            {field:'is_form_flag', title: '表单提交'},
+            {field:'is_default_flag', title: '默认勾选'},
+            {field:'is_open_flag', title: '是否开放'},
+            {field:'create_time', title: '创建时间'},
+            {field:'', width:120, title: '操作',toolbar:'#barItemAct'}
+        ]],
+        done:function(res, curr, count){
+            //console.log(res);
+        }
+    });
+});
+
+$('#s_keyword').on('keyup',function(e){
+    if(e.keyCode==13){
+        $('#searchBtn').trigger('click');
+    }
+});
+
+$('#searchBtn').trigger('click');
+
+////////////////////////////////////////////////////////
+
+//当前操作项
+var nowActItem=null;
+
+//监听工具条
+layui.table.on('tool(dataTable)', function(obj){
+    nowActItem=obj;
+    var item = obj.data;
+    var layEvent = obj.event;
+    var tr = obj.tr;
+ 
+    if(layEvent === 'del'){ //删除
+        layer.confirm('确定要删除么？',{title:'系统提示',icon: 3},function(index){
+            ajax({
+                url:global.appurl+'c=News&a=ptype_delete',
+                data:{item_id:item.id},
+                success:function(json){
+                    if(json.code!=1){
+                        _alert(json.msg);
+                        return;
+                    }
+                    obj.del();
+                    layer.close(index);
+                }
+            });
+        });
+    } else if(layEvent === 'edit'){ //编辑
+        updateView(obj);
+    }
+});
+
+function updateView(obj){
+    var item={};
+    if(obj&&obj.data){
+        item=obj.data;
+        var title='编辑通道';
+    }else{
+        var title='添加通道';
+    }
+    layer.open({
+        title:title,
+        type: 1,
+        shadeClose: true,
+        area: global.screenType < 2 ? ['80%', '300px'] : ['540px', '600px'],
+        content: layui.laytpl($('#layerTpl').html()).render({item:item}),
+        success:function(){
+
+			fileUpload({
+				elem: '#coverImgBtn',
+				auto:true,
+				done:function(json){
+					if(json.code!='1'){
+						_alert(json.msg);
+						return false;
+					}
+					$('#cover').val(json.data.src);
+					$('#coverImgBtn').css({backgroundImage:'url(/'+json.data.src+')'});
+				}
+			});
+			
+			fileUpload({
+				elem: '#bannerImgBtn',
+				auto:true,
+				done:function(json){
+					if(json.code!='1'){
+						_alert(json.msg);
+						return false;
+					}
+					$('#banner').val(json.data.src);
+					$('#bannerImgBtn').css({backgroundImage:'url(/'+json.data.src+')'});
+				}
+			});
+
+            if(obj&&obj.data){
+                $('input[name="is_pass"][value="'+item.is_pass+'"]').attr('checked',true);
+                $('input[name="is_form"][value="'+item.is_form+'"]').attr('checked',true);
+                $('input[name="is_qrcode"][value="'+item.is_qrcode+'"]').attr('checked',true);
+                $('input[name="is_default"][value="'+item.is_default+'"]').attr('checked',true);
+                $('input[name="is_open"][value="'+item.is_open+'"]').attr('checked',true);
+            }
+            layui.form.render();
+        }
+    });
+}
+////////////////////////////////////////////////////////
+
+$('.addBtn').on('click',function(){
+    updateView(null);
+});
+
+
+///////////////////////////////////////
+layui.form.on('select(f-type)', function(data){
+	var val=data.value;
+	$('#accountBox,#qrcodeBox').hide();
+	if(val=='yinhang'){
+		$('#accountBox').show();
+	}else{
+		$('#qrcodeBox').show();
+	}
+});
+
+
+//保存更新
+function saveBtn(ts){
+	var obj=$(ts);
+	var item_id=$('#item_id').val();
+	var i_index=$('#item_id').attr('i-index');
+	var name=$.trim($('#name').val());
+	var aname=$.trim($('#aname').val());
+	var ptype=$.trim($('#ptype').val());
+	var sort=$.trim($('#sort').val());
+	var cover=$.trim($('#cover').val());
+	var banner=$.trim($('#banner').val());
+	var is_qrcode=$('input[name="is_qrcode"]:checked').val();
+	var is_pass=$('input[name="is_pass"]:checked').val();
+	var is_open=$('input[name="is_open"]:checked').val();
+	var is_form=$('input[name="is_form"]:checked').val();
+	var is_default=$('input[name="is_default"]:checked').val();
+	var has_click=obj.attr('has-click');
+	if(has_click=='1'){
+		return false;
+	}else{
+		obj.attr('has-click','1');
+	}
+	ajax({
+		url:global.appurl+'c=News&a=ptype_update',
+		data:{item_id:item_id,name:name,aname:aname,ptype:ptype,sort:sort,banner:banner,cover:cover,is_pass:is_pass,is_open:is_open,is_qrcode:is_qrcode,is_form:is_form,is_default:is_default},
+		success:function(json){
+			_alert(json.msg);
+			obj.attr('has-click','0');
+			if(json.code!='1'){
+				return false;
+			}
+			layer.closeAll('page');
+
+			if(!item_id){
+				$('#searchBtn').trigger('click');//重新加载
+			}else{
+
+                nowActItem.update({
+                    name:name,
+                    aname:aname,
+                    ptype:ptype,
+                    sort:sort,
+                    cover:cover,
+                    banner:banner,
+                    is_pass:is_pass,
+                    is_pass_flag:$('input[name="is_pass"][value="'+is_pass+'"]').attr('title'),
+                    is_open:is_open,
+                    is_open_flag:$('input[name="is_open"][value="'+is_open+'"]').attr('title'),
+                    is_qrcode:is_qrcode,
+                    is_qrcode_flag:$('input[name="is_qrcode"][value="'+is_qrcode+'"]').attr('title'),
+                    is_form:is_form,
+                    is_form_flag:$('input[name="is_form"][value="'+is_form+'"]').attr('title'),
+                    is_default:is_default,
+                    is_default_flag:$('input[name="is_default"][value="'+is_default+'"]').attr('title')
+                });
+                
+			}
+		}
+	});
+}
+
+
+
+</script>

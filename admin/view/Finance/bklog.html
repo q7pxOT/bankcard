@@ -1,0 +1,305 @@
+<style>
+.imgItemBtn{cursor:pointer;}
+.userItem{display:inline-block;margin-right:5px;border:1px solid #dedede;position:relative;width:80px;cursor:pointer;}
+.userItem img{height:80px;}
+.userItem .nickname{position:absolute;left:0;bottom:0;display:block;width:100%;overflow:hidden;background:rgba(11,11,11,0.4);color:#fefefe;text-align:center;}
+.userItemNva{border:1px solid #f60;}
+</style>
+<div class="layui-col-md12">
+<div class="layui-card">
+<div class="layui-card-header"><span>提现拨款明细</span></div>
+<div class="layui-card-body">
+
+    <form class="layui-form" id="searchForm" action="">
+        <div class="layui-form-item" style="margin-bottom:5px;">
+            <div class="layui-inline" style="margin-right:0;">
+                <label class="layui-form-label" style="width:30px;">开始</label>
+                <div class="layui-input-inline" style="width:120px;">
+                    <input name="s_start_time" id="s_start_time" class="layui-input" placeholder="开始日期" />
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" style="width:30px;">结束</label>
+                <div class="layui-input-inline" style="width:120px;">
+                    <input name="s_end_time" id="s_end_time" class="layui-input" placeholder="结束日期">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" style="width:60px;">审核状态</label>
+                <div class="layui-input-inline" style="width:120px;text-align:left;">
+
+                    <select id="s_status" name="s_status">
+                        <option value="all">全部</option>
+                        [[foreach from='cnf_bklog_status'|getConfig item=vo key=skey]]
+                        <option value="[[$skey]]">[[$vo]]</option>
+                        [[/foreach]]
+                    </select>
+
+                </div>
+            </div>
+
+            <div class="layui-inline">
+                <label class="layui-form-label" style="width:50px;">关键词</label>
+                <div class="layui-input-inline" style="width:180px;">
+                    <input type="text" name="s_keyword" id="s_keyword" autocomplete="off" class="layui-input" placeholder="请输入关键词">
+                </div>
+            </div>
+            <div class="layui-inline" style="margin-right:0;">
+                <input type="hidden" name="is_download" id="is_download"/>
+                <span class="layui-btn" id="searchBtn">查询</span>
+                <!--
+                <span class="layui-btn layui-btn-danger" id="downloadBtn">导出</span>
+                -->
+            </div>
+        </div>
+    </form>
+
+    <table class="layui-hide" id="dataTable" lay-filter="dataTable"></table>
+    <!--记录操作工具条-->
+    <script type="text/html" id="barItemAct">
+        {{#if(d.check==1&&(d.status==2)){}}
+        <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="check">审核</a>
+        {{#}}}
+        {{#if(d.status==1||d.status==4){}}
+        <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="bktj">提交</a>
+        {{#}}}
+    </script>
+	
+</div>
+</div>
+</div>
+
+
+<!--弹层-->
+<script type="text/html" id="layerTpl">
+    <form class="layui-form LayerForm" onsubmit="return false;">
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label"><span>拨款金额</span>：</label>
+            <div class="layui-input-block">
+                <input type="text" id="money" placeholder="" style="width:50%;" disabled autocomplete="off" class="layui-input" value="{{d.item.money||'0'}}" />
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text" style="margin-bottom:0;">
+            <label class="layui-form-label"><span>备注信息</span>：</label>
+            <div class="layui-input-block">
+               <textarea id="remark" style="padding:5px;width:80%;height:100px;">{{d.item.remark||''}}</textarea>
+            </div>
+        </div>
+        <div class="layui-form-item qrcodeBox" style="margin-bottom:5px;">
+            <label class="layui-form-label">拨款凭证：</label>
+            <div class="layui-input-block">
+                <div class="layui-upload">
+                    <div class="layui-upload-list" id="coverImgBtn" title="点击修改" style="background-image:url(/{{d.item.banners[0]}});display:inline-block;cursor:pointer;width:80px;height:80px;line-height:80px;text-align:center;border:1px solid #dedede;background-size:cover;background-color:#eee;">
+                        <i class="layui-icon" style="font-size:30px;">&#xe654;</i>
+                        <input type="hidden" id="cover" value="{{d.item.banners[0]||''}}"/>
+                    </div>
+					<!--
+                    <div style="color:#f60;display:inline-block;">建议尺寸320×320</div>
+					-->
+                </div>
+            </div>
+        </div>
+        
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <input type="hidden" id="item_id" value="{{d.item.id||''}}" />
+                <span class="layui-btn" onclick="savebkBtn(this)">提交保存</span>
+            </div>
+        </div>
+    </form>
+</script>
+
+<script>
+
+$('#searchBtn').on('click',function(){
+	var obj=$(this);
+	var pdata={
+		s_keyword:$.trim($('#s_keyword').val()),
+		s_status:$.trim($('#s_status').val()),
+		s_start_time:$.trim($('#s_start_time').val()),
+		s_end_time:$.trim($('#s_end_time').val()),
+	};
+	dataPage({
+		where:pdata,
+        url:global.appurl+'c=Finance&a=bklog_list',
+        cols:[[
+            {field:'id', width:70, title: 'ID'},
+            {field:'account', title: '提现用户',templet:function(d){
+				return d.account+'<br>'+d.nickname;
+			}},
+            {field:'a_account', title: '应拨款代理',templet:function(d){
+				if(!d.a_account){
+					return '平台';
+				}
+				return d.a_account+'<br>'+d.a_nickname;
+			}},
+            {field:'csn', title: '提现单号',width:210},
+            {field:'bank_name',width:240,style:'text-align:left;', title: '账户信息',templet:function(d){
+                var html='<div style="line-height:1.2rem;">';
+                html+='<div>银行：'+d.bank_name+'</div>';
+                html+='<div>姓名：'+d.bank_realname+'</div>';
+                html+='<div>卡号：'+d.bank_account+'</div>';
+				html+='</div>';
+                return html;
+            }},
+            {field:'money', title: '应拨款金额'},
+            {field:'create_time',width:120, title: '创建时间'},
+            {field:'banners', title: '拨款凭证',templet:function(d){
+				var html='';
+				for(var i in d.banners){
+					html+='<img src="'+d.banners[i]+'" class="imgItemBtn" onclick="showImg(this)" style="height:50px;margin:0 3px;"/>';
+				}
+				return html;
+			}},
+            {field:'remark', title: '备注说明'},
+            {field:'status_flag', title: '审核状态'},
+            {field:'check_time',width:120, title: '审核时间'},
+			{field:'', width:120, title: '操作',toolbar:'#barItemAct'}
+        ]],
+        done:function(res, curr, count){
+            if($('.sumLine').length<1){
+                var html='<div class="sumLine">总额：'+res.odata.sum_money+'</span></div>';
+                $('.layui-table-page').before(html);
+            }
+        }
+	});
+});
+
+$('#s_keyword').on('keyup',function(e){
+	if(e.keyCode==13){
+		$('#searchBtn').trigger('click');
+	}
+});
+
+$('#searchBtn').trigger('click');
+
+////////////////////////////////////////////////////////
+
+//当前操作项
+var nowActItem=null;
+
+//监听工具条
+layui.table.on('tool(dataTable)', function(obj){
+    nowActItem=obj;
+    var item = obj.data;
+    var layEvent = obj.event;
+    var tr = obj.tr;
+ 
+    if(layEvent === 'check'){
+		var con='<form class="layui-form">';
+			con+='<input type="radio" name="ck_status" value="1" title="待处理" />';
+			con+='<input type="radio" name="ck_status" value="2" title="已提交"/>';
+			con+='<input type="radio" name="ck_status" value="3" title="已通过"/>';
+			con+='<input type="radio" name="ck_status" value="4" title="不通过"/>';
+			con+='<input type="radio" name="ck_status" value="7" title="已取消"/>';
+		con+='</form>';
+		
+		layer.open({
+			title:'审核拨款记录',
+			content:con,
+			btnAlign: 'c',
+			btn:['确定','取消'],
+			success:function(){
+				$('input[name="ck_status"][value="'+item.status+'"]').prop('checked',true);
+				layui.form.render();
+			},
+			yes:function(index){
+				var status=$('input[name="ck_status"]:checked').val();
+				if(!status){
+					alert('请选择审核状态');
+					return;
+				}
+				
+				ajax({
+					url:global.appurl+'c=Finance&a=bklog_check',
+					data:{item_id:item.id,status:status},
+					success:function(json){
+						if(json.code!=1){
+							alert(json.msg);
+							return;
+						}
+						layer.close(index);
+						_alert(json.msg);
+						var uitem={
+							check_time:json.data.check_time,
+							status:json.data.status,
+							status_flag:json.data.status_flag
+						};
+						nowActItem.update(uitem);
+						if(status==3||status==7){
+							$(nowActItem.tr.selector).find('td').last().html('<div class="layui-table-cell laytable-cell-1-0-11">/</div>');
+						}
+					}
+				});
+				
+			}
+		});
+
+    }else if(layEvent=='bktj'){
+		layer.open({
+			title:'提交拨款凭证',
+			type: 1,
+			shadeClose: true,
+			area: global.screenType < 2 ? ['80%', '300px'] : ['640px', '415px'],
+			content: layui.laytpl($('#layerTpl').html()).render({item:item}),
+			success:function(){
+				fileUpload({
+					elem: '#coverImgBtn',
+					auto:true,
+					done:function(json){
+						if(json.code!='1'){
+							_alert(json.msg);
+							return false;
+						}
+						$('#cover').val(json.data.src);
+						$('#coverImgBtn').css({backgroundImage:'url(/'+json.data.src+')'});
+					}
+				});
+				layui.form.render();
+			}
+		});
+	}
+});
+
+function savebkBtn(ts){
+	var obj=$(this);
+	var item_id=$.trim($('#item_id').val());
+	var remark=$.trim($('#remark').val());
+	var cover=$.trim($('#cover').val());
+	ajax({
+		url:global.appurl+'c=Finance&a=bklog_update',
+		data:{item_id:item_id,remark:remark,cover:cover},
+		success:function(json){
+			if(json.code!=1){
+				_alert(json.msg);
+				return;
+			}
+			layer.closeAll('page');
+			_alert(json.msg);
+			nowActItem.update({
+				banners:[cover],
+				remark:remark,
+				status:json.data.status,
+				status_flag:json.data.status_flag
+			});
+			if(nowActItem.data.check==1){
+				$(nowActItem.tr.selector).find('td').last().html('<div class="layui-table-cell laytable-cell-1-0-11"><a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="check">审核</a></div>');
+			}else{
+				$(nowActItem.tr.selector).find('td').last().html('<div class="layui-table-cell laytable-cell-1-0-11">/</div>');
+			}
+			
+		}
+	});
+}
+
+
+//导出操作
+$('#downloadBtn').on('click',function(){
+	$('#is_download').val(1);
+	var params=$('#searchForm').serialize();
+	var url='[[$smarty.const.APP_URL]]?c=User&a=paylog_list&'+params;
+	window.open(url,'_blank');
+	$('#is_download').val(0);
+});
+
+</script>

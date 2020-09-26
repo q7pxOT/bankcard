@@ -1,0 +1,114 @@
+<style>
+.layui-form-label{width:100px;}
+.layui-input-block{margin-left:130px;}
+</style>
+<div class="layui-col-md12">
+<div class="layui-card">
+<div class="layui-card-header">
+	<span>支付宝SDK</span>
+</div>
+<div class="layui-card-body">
+	<form class="layui-form layui-col-lg6">
+		<div class="layui-form-item" style="margin-bottom:2px;">
+			<label class="layui-form-label">商户账号：</label>
+			<div class="layui-input-block" style="line-height:38px;">
+				[[$user.sname]]
+			</div>
+		</div>
+		<div class="layui-form-item" style="margin-bottom:2px;">
+			<label class="layui-form-label">APPID：</label>
+			<div class="layui-input-block" style="line-height:38px;">
+				<input type="test" id="appid" autocomplete="off" placeholder="" class="layui-input" value="[[$user.appid]]">
+			</div>
+		</div>
+		<div class="layui-form-item" style="margin-bottom:2px;">
+			<label class="layui-form-label">支付宝网关：</label>
+			<div class="layui-input-block" style="line-height:38px;">
+				<input type="test" id="wangguan" autocomplete="off" placeholder="" class="layui-input" value="[[$user.wangguan]]">
+			</div>
+		</div>
+		
+		<div class="layui-form-item rsaItem" style="">
+			<label class="layui-form-label">RSA2密钥：</label>
+			<div class="layui-input-block">
+				<textarea class="layui-textarea" id="rsas" style="height:160px;resize:none;" >[[$user.rsas]]</textarea>
+			</div>
+		</div>
+		<div class="layui-form-item rsaItem" style="">
+			<label class="layui-form-label">RSA密钥：</label>
+			<div class="layui-input-block">
+				<textarea class="layui-textarea" id="rsa" style="height:160px;resize:none;" >[[$user.rsa]]</textarea>
+			</div>
+		</div>
+		
+		<!--<div class="layui-form-item">
+			<label class="layui-form-label">二级密码：</label>
+			<div class="layui-input-block" style="width:40%;">
+				<input type="password" id="password2" autocomplete="off" placeholder="" class="layui-input">
+			</div>
+		</div>-->
+		<div class="layui-form-item">
+			<label class="layui-form-label">&nbsp;</label>
+			<div class="layui-input-block">
+				<span class="layui-btn layui-btn-normal saveBtn">提交保存</span>
+			</div>
+		</div>
+		
+	</form>
+	
+	<div style="height:50px;clear:both;"></div>
+</div>
+</div>
+</div>
+
+<script>
+
+layui.form.on('radio(is_rsa)', function(data){
+	if(data.value==1){
+		$('.rsaItem').show();
+	}else{
+		$('.rsaItem').hide();
+	}
+});
+
+$('.saveBtn').on('click',function(){
+	var obj=$(this);
+	var appid=$.trim($('#appid').val());
+	var wangguan=$.trim($('#wangguan').val());
+	var rsa=$.trim($('#rsa').val());
+	var rsas=$.trim($('#rsas').val());
+	if(!appid){
+		_alert('请填写您的APPID');
+		return false;
+	}
+	if(!wangguan){
+		_alert('请填写您网关地址');
+		return false;
+	}
+	if(!rsas){
+		_alert('请填写您的RSA2公钥');
+		return false;
+	}
+	if(!rsa){
+		_alert('请填写您的RSA公钥');
+		return false;
+	}
+	$.ajax({
+		url:global.appurl+'c=User&a=rsaset_updates',
+		data:{appid:appid,wangguan:wangguan,rsa:rsa,rsas:rsas},
+		success:function(json){
+			json = JSON.parse(json);
+			if(json.code!='1'){
+				obj.attr('has-click','0');
+				_alert(json.msg+"aaa");
+				return false;
+			}
+			_alert(json.msg,{},function(){
+				location.reload();
+			});
+		}
+	});
+});
+
+
+</script>

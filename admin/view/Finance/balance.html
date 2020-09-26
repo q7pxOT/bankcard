@@ -1,0 +1,251 @@
+<div class="layui-col-md12">
+<div class="layui-card">
+<div class="layui-card-header"><span>账户余额</span></div>
+<div class="layui-card-body">
+	<form class="layui-form layui-col-lg5">
+		<div class="layui-form-item" style="margin-bottom:2px;">
+			<label class="layui-form-label">账号：</label>
+			<div class="layui-input-block" style="line-height:38px;">
+				[[$user.account]] [[if in_array($user.gid,[85,91])]]<b style="color:#f30;">【[[$model_flag]]】</b>[[/if]]
+			</div>
+		</div>
+		<!--卡商-->
+		[[if in_array($user.gid,[85,91])]]
+		<div class="layui-form-item" style="margin-bottom:2px;">
+			<label class="layui-form-label">可提余额：</label>
+			<div class="layui-input-block" style="line-height:38px;">
+				￥[[$user.balance]] [[if $model eq 2]]<span class="layui-btn layui-btn-xs layui-btn-warm transToBalance" style="margin-left:10px;" data-type="1">可提⇄接单</span>[[/if]]
+			</div>
+		</div>
+		<div class="layui-form-item" style="margin-bottom:2px;">
+			<label class="layui-form-label">接单余额：</label>
+			<div class="layui-input-block" style="line-height:38px;">
+				￥[[$user.sx_balance]] [[if $model eq 2]]<span class="layui-btn layui-btn-xs layui-btn-warm transToBalance" style="margin-left:10px;" data-type="2">接单⇄可提</span>[[/if]]
+			</div>
+		</div>
+		<div class="layui-form-item" style="margin-bottom:2px;">
+			<label class="layui-form-label">冻结金额：</label>
+			<div class="layui-input-block" style="line-height:38px;">
+				￥[[$user.fz_balance]]
+			</div>
+		</div>
+		[[if 'cnf_xyhk_model'|getConfig eq '是']]
+		<div class="layui-form-item" style="margin-bottom:2px;">
+			<label class="layui-form-label">应回款：</label>
+			<div class="layui-input-block" style="line-height:38px;">
+				￥[[$user.kb_balance]]
+			</div>
+		</div>
+		[[/if]]
+		
+		[[else]]
+		<!--商户-->
+		<div class="layui-form-item" style="margin-bottom:2px;">
+			<label class="layui-form-label">可提余额：</label>
+			<div class="layui-input-block" style="line-height:38px;">
+				￥[[$user.balance]]
+			</div>
+		</div>
+		<div class="layui-form-item" style="margin-bottom:2px;">
+			<label class="layui-form-label">待结算：</label>
+			<div class="layui-input-block" style="line-height:38px;">
+				￥[[$djs_balance]]
+			</div>
+		</div>
+		[[/if]]
+
+		<div class="layui-form-item">
+			<label class="layui-form-label">银行卡：</label>
+			<div class="layui-input-block" style="width:60%;">
+				<select id="blog_id">
+					<option value="0">请选择银行卡</option>
+					[[foreach from=$banklog_arr item=vo]]
+					<option value="[[$vo.id]]">【[[$vo.bank_name]]】[[$vo.bank_account]] - [[$vo.bank_realname]]</option>
+					[[/foreach]]
+				</select>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">提现金额：</label>
+			<div class="layui-input-block" style="width:60%;">
+				<input type="text" id="money" autocomplete="off" placeholder="" class="layui-input">
+				<div style="color:#f60;">单笔最小：￥[['min_cash_money'|getConfig]] ，单笔最大：￥[['max_cash_money'|getConfig]] ，单日累计：￥[['max_day_cash_money'|getConfig]]</div>
+				<div style="color:#f60;">[[$cash_time_str]]</div>
+				<div style="color:#f30;">提现手续费 = [[$fee_str]]</div>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">二级密码：</label>
+			<div class="layui-input-block" style="width:40%;">
+				<input type="password" id="password2" autocomplete="off" placeholder="" class="layui-input">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">谷歌验证码</label>
+			<div class="layui-input-block">
+				<input type="text" id="gcode" data-gcode="[[$user.gcode]]" autocomplete="off"  class="layui-input layui-input-inline"> <span style="line-height:38px;">&nbsp;未绑定可忽略</span>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">&nbsp;</label>
+			<div class="layui-input-block">
+				<span class="layui-btn layui-btn-normal saveBtn">提现申请</span>
+			</div>
+		</div>
+	</form>
+	
+	<div style="height:100px;clear:both;"></div>
+</div>
+</div>
+</div>
+
+<!--弹层-->
+<script type="text/html" id="layerTpl">
+	<form class="layui-form LayerForm" onsubmit="return false;">
+		<div class="layui-form-item layui-form-text">
+			<label class="layui-form-label balanceTit">{{d.item.title}}</label>
+			<div class="layui-input-block" style="line-height:38px;padding-left:0;text-align:left;">
+				<span class="balanceFlag">{{d.item.balance}}</span>
+				<span class="layui-btn layui-btn-xs layui-btn-normal transAllBtn" style="margin-left:10px;">全部</span>
+			</div>
+		</div>
+		<div class="layui-form-item layui-form-text">
+			<label class="layui-form-label">转出额度：</label>
+			<div class="layui-input-block">
+				<input type="text" id="z_money" placeholder="" autocomplete="off" class="layui-input" value="" />
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<div class="layui-input-block">
+				<input type="hidden" id="ptype" value="0" />
+				<span class="layui-btn" onclick="saveTrans(this)">提交保存</span>
+			</div>
+		</div>
+	</form>
+</script>
+
+<script>
+
+$('body').on('click','.transAllBtn',function(){
+	var balance=$.trim($('.balanceFlag').text());
+	$('#z_money').val(balance);
+});
+
+$('.transToBalance').on('click',function(){
+	var obj=$(this);
+	var ptype=obj.attr('data-type');
+	var item={};
+	if(ptype==1){
+		title='可提现余额->接单余额';
+		item.title='可提余额：';
+		item.balance='[[$user.balance]]';
+	}else if(ptype==2){
+		title='接单余额->可提现余额';
+		item.title='接单余额：';
+		item.balance='[[$user.sx_balance]]';
+	}else{
+		_alert('未知操作类型');
+		return;
+	}
+	layer.open({
+		title:title,
+		type: 1,
+		shadeClose: true,
+		area: global.screenType < 2 ? ['80%', '300px'] : ['400px', '260px'],
+		content: layui.laytpl($('#layerTpl').html()).render({item:item}),
+		success:function(){
+			$('#ptype').val(ptype);
+			layui.form.render();
+		}
+	});
+});
+
+function saveTrans(ts){
+	var obj=$(ts);
+	var ptype=$('#ptype').val();
+	var money=$.trim($('#z_money').val());
+	if(!money||money<0.01){
+		_alert('转出额度不正确');
+		return;
+	}
+	var has_click=obj.attr('has-click');
+	if(has_click=='1'){
+		return false;
+	}else{
+		obj.attr('has-click','1');
+	}
+	ajax({
+		url:global.appurl+'c=Finance&a=balanceTrans',
+		data:{ptype:ptype,money:money},
+		success:function(json){
+			if(json.code!=1){
+				obj.attr('has-click','0');
+				_alert(json.msg);
+				return;
+			}
+			layer.closeAll();
+			_alert(
+				json.msg,{},
+				function(){
+					location.reload();
+				}
+			);
+		}
+	});	
+}
+
+/////////////////////////////////////////////////////
+
+$('.saveBtn').on('click',function(){
+	var obj=$(this);
+	var has_money='[[$user.balance]]'*1;
+	var blog_id=$.trim($('#blog_id').val());
+	var money=$.trim($('#money').val())*1;
+	var password2=$.trim($('#password2').val());
+	var gcode=$.trim($('#gcode').val());
+	if(blog_id<1){
+		_alert('请选择提现银行卡');
+		return false;
+	}
+	if(!money||money<0.01){
+		_alert('提现金额不正确');
+		return false;
+	}else{
+		if(money>has_money){
+			_alert('可提现金额不足');
+			return false;
+		}
+	}
+	if(!password2){
+		_alert('请输入二级密码');
+		return false;
+	}
+	if(!gcode){
+		_alert('请输入谷歌验证码');
+		return false;
+	}
+	password2=md5(password2);
+	var has_click=obj.attr('has-click');
+	if(has_click=='1'){
+		return false;
+	}else{
+		obj.attr('has-click','1');
+	}
+	ajax({
+		url:global.appurl+'c=Finance&a=balance_cash',
+		data:{blog_id:blog_id,money:money,gcode:gcode,password2:password2},
+		success:function(json){
+			if(json.code!='1'){
+				obj.attr('has-click','0');
+				_alert(json.msg);
+				return false;
+			}
+			_alert(json.msg,{},function(){
+				location.reload();
+			});
+		}
+	});
+});
+
+
+</script>

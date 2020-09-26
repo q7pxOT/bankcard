@@ -1,0 +1,66 @@
+<div class="layui-col-md12">
+<div class="layui-card">
+<div class="layui-card-header"><span>基本资料</span></div>
+<div class="layui-card-body">
+    
+    <div id="appContentBox"></div>
+    
+    <script type="text/html" id="appContentTpl">
+        <table class="layui-table">
+            <colgroup>
+                <col width="20%">
+                <col>
+            </colgroup>
+            <tbody>
+                <tr>
+                    <td>头像</td>
+                    <td><img style="height:50px;" src="{{d.user.headimgurl}}"/></td>
+                </tr>
+                <tr>
+                    <td>账号</td>
+                    <td>{{d.user.account}}</td>
+                </tr>
+                <tr>
+                    <td>手机号</td>
+                    <td>{{d.user.phone||''}}</td>
+                </tr>
+                <tr>
+                    <td>邀请码</td>
+                    <td>{{d.user.icode}}</td>
+                </tr>
+                <tr>
+                    <td>姓名/昵称</td>
+                    <td>{{d.user.realname}}/{{d.user.nickname}}</td>
+                </tr>
+                <tr>
+                    <td>分组</td>
+                    <td>{{d.user.gnmae}}</td>
+                </tr>
+                <tr>
+                    <td>登录时间</td>
+                    <td style="padding-bottom: 0;">{{d.user.login_time}}</td>
+                </tr>
+                <tr>
+                    <td>登录IP</td>
+                    <td style="padding-bottom: 0;">{{d.user.login_ip}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </script>
+
+</div>
+</div>
+</div>
+
+<script>
+ajax({
+    url:global.appurl+'c=Login&a=userinfo',
+    success:function(json){
+        if(json.code!='1'){
+            _alert(json.msg);
+            return;
+        }
+        $('#appContentBox').html(layui.laytpl($('#appContentTpl').html()).render({user:json.data.user}));
+    }
+});
+</script>

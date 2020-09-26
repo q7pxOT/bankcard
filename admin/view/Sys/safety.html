@@ -1,0 +1,205 @@
+<style>
+.googleBox{
+	height:340px;width:240px;border:1px solid #dedede;position:absolute;left:500px;top:50px;
+	padding:10px;
+}
+</style>
+<div class="layui-col-md12">
+<div class="layui-card">
+<div class="layui-card-header"><span>安全设置</span></div>
+<div class="layui-card-body">
+
+	<form class="layui-form">
+		<div class="layui-form-item" style="margin-bottom:2px;">
+			<label class="layui-form-label">账号</label>
+			<div class="layui-input-block" style="line-height:38px;">
+				[[$user.account]]
+			</div>
+		</div>
+		<div class="layui-form-item" style="margin-bottom:2px;">
+			<label class="layui-form-label">绑定手机号</label>
+			<div class="layui-input-block" style="line-height:38px;">
+				[[if $user.phone]][[$user.phone]][[else]]未绑定[[/if]]
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">新手机号</label>
+			<div class="layui-input-block">
+				<input type="text" id="phone" data-phone="[[$user.phone]]" autocomplete="off"  class="layui-input layui-input-inline"> <span style="line-height:38px;">&nbsp;不做绑定可忽略</span>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">登录密码</label>
+			<div class="layui-input-block">
+				<input type="password" id="password" autocomplete="off" placeholder="" style="width:190px;" class="layui-input">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">确认密码</label>
+			<div class="layui-input-block">
+				<input type="password" id="password_c" autocomplete="off" placeholder="" style="width:190px;" class="layui-input">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">二级密码</label>
+			<div class="layui-input-block">
+				<input type="password" id="password2" autocomplete="off" placeholder="" style="width:190px;" class="layui-input">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">确认密码</label>
+			<div class="layui-input-block">
+				<input type="password" id="password2_c" autocomplete="off" placeholder="" style="width:190px;" class="layui-input">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label"></label>
+			<div class="layui-input-block">
+				<br/>
+				<br/>
+				<br/>
+				<div>
+1、Android移动设备：在手机应用市场搜索“Google身份验证器”或“Google Authenticator”，下载安装。<br>
+2、iOS移动设备：进入AppStore，搜索“Google Authenticator”，下载安装。<br>
+				</div>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">谷歌验证码</label>
+			<div class="layui-input-block">
+				<input type="text" id="gcode" data-phone="[[$user.gcode]]" autocomplete="off"  class="layui-input layui-input-inline"> <span style="line-height:38px;">&nbsp;未绑定可忽略</span>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">&nbsp;</label>
+			<div class="layui-input-block">
+				<span class="layui-btn layui-btn-normal" onclick="saveBtn(this);">保存</span>
+			</div>
+		</div>
+	</form>
+	
+	[[if !$user.google_hide]]
+	<div class="googleBox">
+		<div style="text-align:center;padding-bottom:5px;">Google验证添加</div>
+		<div style="width:240px;height:208px;background:url([[$google_qrcode]]) no-repeat center top;">
+			
+		</div>
+		<div style="text-align:left;padding:0 10px;">
+		账号：[[$user.account]]<br>
+		密钥：[[$user.google_secret]]
+		</div>
+		<div style="text-align:center;padding-top:2px;">
+			<span class="layui-btn layui-btn-sm layui-btn-danger hideGoogle">隐藏谷歌配置</span>
+			<div style="color:#f30;font-weight:bold;">隐藏后将不再显示，请谨慎操作</div>
+		</div>
+	</div>
+	[[/if]]
+    <div style="clear:both;"></div>
+</div>
+</div>
+</div>
+
+<script>
+
+function getPhoneCode(ts){
+	var obj=$(ts);
+	var phone=$.trim($('#phone').val());
+	if(!phone){
+		_alert('请填写新手机号');
+		return false;
+	}
+	if(obj.attr('is-timer')){
+		return true;
+	}
+	smsTimer(obj);
+	ajax({
+		url:global.appurl+'a=getPhoneCode',
+		data:{phone:phone,stype:3},
+		success:function(json){
+            if(json.code!=1){
+                _alert(json.msg);
+                return;
+            }
+			console.log(json);
+		}
+	});
+};
+
+function saveBtn(ts){
+	var obj=$(ts);
+	var ori_phone=$('#phone').attr('data-phone');
+	var phone=$.trim($('#phone').val());
+	var pcode=$.trim($('#pcode').val());
+	var password=$.trim($('#password').val());
+	var password_c=$.trim($('#password_c').val());
+	var password2=$.trim($('#password2').val());
+	var password2_c=$.trim($('#password2_c').val());
+	var gcode=$.trim($('#gcode').val());
+
+	if(phone){
+		if(phone==ori_phone){
+			_alert('新手机号已经绑定');
+			return false;
+		}
+	}
+	if(password&&password!=password_c){
+		_alert('登录密码两次输入不一致');
+		return false;
+	}else{
+		if(password){
+			password=md5(password);
+		}
+	}
+	if(password2&&password2!=password2_c){
+		_alert('二级密码两次输入不一致');
+		return false;
+	}else{
+		if(password2){
+			password2=md5(password2);
+		}
+	}
+	var has_click=obj.attr('has-click');
+	if(has_click=='1'){
+		return false;
+	}else{
+		obj.attr('has-click','1');
+	}
+	ajax({
+		url:global.appurl+'c=Sys&a=safety_update',
+		data:{phone:phone,pcode:pcode,password:password,password2:password2,stype:3,gcode:gcode},
+		success:function(json){
+			if(json.code!='1'){
+				obj.attr('has-click','0');
+				_alert(json.msg);
+				return false;
+			}
+			_alert(json.msg,'',function(){
+				location.reload();
+			});
+		}
+	});
+}
+
+
+//隐藏google配置
+$('.hideGoogle').on('click',function(){
+	layer.confirm('<span style="color:#f30;">隐藏谷歌配置信息后将不再显示，您确定要隐藏么？</span>',{title:'系统提示',icon: 3},function(index){
+		ajax({
+			url:global.appurl+'c=Sys&a=google_hide',
+			data:{},
+			success:function(json){
+				if(json.code!=1){
+					_alert(json.msg);
+					return;
+				}
+				layer.close(index);
+				_alert(json.msg,{},function(){
+					location.reload();
+				});
+			}
+		});
+	});
+});
+
+
+</script>

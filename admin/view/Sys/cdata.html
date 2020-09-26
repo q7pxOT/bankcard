@@ -1,0 +1,111 @@
+<style>
+.googleBox{
+	height:290px;width:220px;border:1px solid #dedede;position:absolute;left:500px;top:100px;
+	padding:10px;
+}
+</style>
+<div class="layui-col-md12">
+<div class="layui-card">
+<div class="layui-card-header"><span>数据清理</span></div>
+<div class="layui-card-body">
+
+	<form class="layui-form">
+		<div class="layui-form-item">
+			<label class="layui-form-label" style="width:120px;">清理数据项：</label>
+			<div class="layui-input-block">
+				<input type="checkbox" name="table" autocomplete="off" value="sk_ma" title="收款码回收站" lay-skin="primary">
+				<input type="checkbox" name="table" autocomplete="off" value="sk_order" title="订单明细" lay-skin="primary">
+				<input type="checkbox" name="table" autocomplete="off" value="sk_yong" title="分成记录" lay-skin="primary">
+				<input type="checkbox" name="table" autocomplete="off" value="cnf_paylog" title="充值记录" lay-skin="primary"><br>
+				<input type="checkbox" name="table" autocomplete="off" value="cnf_cashlog" title="提现记录" lay-skin="primary">
+				<input type="checkbox" name="table" autocomplete="off" value="cnf_balance_log" title="资金变动明细" lay-skin="primary">
+				<input type="checkbox" name="table" autocomplete="off" value="cnf_cashlog_bklog" title="提现拨款明细" lay-skin="primary">
+				<input type="checkbox" name="table" autocomplete="off" value="sk_agent_hklog" title="卡商回款记录" lay-skin="primary">
+				<input type="checkbox" name="table" autocomplete="off" value="sys_log" title="操作日志" lay-skin="primary">
+			</div>
+		</div>
+		<div class="layui-form-item" style="display:none;">
+			<label class="layui-form-label" style="width:120px;">开始时间：</label>
+			<div class="layui-input-block">
+				<input type="text" id="s_start_time2" value="2019-09-01 00:00:01" autocomplete="off" placeholder="请选择"  class="layui-input layui-input-inline">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label" style="width:120px;">截止时间：</label>
+			<div class="layui-input-block">
+				<input type="text" id="s_end_time2" autocomplete="off" placeholder="请选择"  class="layui-input layui-input-inline">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label" style="width:120px;">二级密码：</label>
+			<div class="layui-input-block">
+				<input type="password" id="password2" autocomplete="off" placeholder="" style="width:190px;" class="layui-input">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label" style="width:120px;">&nbsp;</label>
+			<div class="layui-input-block">
+				<span class="layui-btn layui-btn-normal" onclick="saveBtn(this);">提交处理</span>
+				<div style="color:#f30;">清理后将将无法找回，请务必谨慎操作。</div>
+			</div>
+		</div>
+	</form>
+    <div style="clear:both;"></div>
+</div>
+</div>
+</div>
+
+<script>
+
+layui.laydate.render({elem:'#s_start_time2', type:'datetime',format: 'yyyy-MM-dd HH:mm:ss'});
+layui.laydate.render({elem:'#s_end_time2',type:'datetime',format: 'yyyy-MM-dd HH:mm:ss'});
+
+function saveBtn(ts){
+	var obj=$(ts);
+	var table=[];
+	$('input[name="table"]:checked').each(function(i,o){
+		table.push($(o).val());
+	});
+	if(table.length<1){
+		_alert('请选择要清理的数据项');
+		return;
+	}
+	var s_start_time=$.trim($('#s_start_time2').val());
+	var s_end_time=$.trim($('#s_end_time2').val());
+	if(!s_start_time){
+		_alert('请选择开始时间');
+		return;
+	}
+	if(!s_end_time){
+		_alert('请选择截止时间');
+		return;
+	}
+	
+	var password2=$.trim($('#password2').val());
+	if(!password2){
+		_alert('请填写二级密码');
+		return false;
+	}else{
+		if(password2){
+			password2=md5(password2);
+		}
+	}
+	layer.confirm('<span style="color:#f30;">清理后将将无法找回，确定要清理么？</span>',{title:'系统提示',icon: 3},function(index){
+		ajax({
+			url:global.appurl+'c=Sys&a=cdata_act',
+			data:{password2:password2,table:table,s_start_time:s_start_time,s_end_time:s_end_time},
+			success:function(json){
+				if(json.code!='1'){
+					_alert(json.msg);
+					return false;
+				}
+				_alert(json.msg,'',function(){
+					location.reload();
+				});
+			}
+		});
+	});
+}
+
+
+</script>

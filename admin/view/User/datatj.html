@@ -1,0 +1,182 @@
+<div class="layui-card">
+  <div class="layui-card-header">数据统计</div>
+  <div class="layui-card-body layui-text">
+  
+	<form class="layui-form" id="searchForm" action="">
+		<div class="layui-form-item" style="margin-bottom:5px;">
+			<div class="layui-inline" style="margin-right:0;">
+				<label class="layui-form-label" style="width:30px;">开始</label>
+				<div class="layui-input-inline" style="width:120px;">
+					<input name="s_start_time" id="s_start_time" value="[[$s.s_start_time]]" class="layui-input" placeholder="开始日期" />
+				</div>
+			</div>
+			<div class="layui-inline">
+				<label class="layui-form-label" style="width:30px;">结束</label>
+				<div class="layui-input-inline" style="width:120px;">
+					<input name="s_end_time" id="s_end_time" value="[[$s.s_end_time]]" class="layui-input" placeholder="结束日期">
+				</div>
+			</div>
+			<div class="layui-inline">
+				<label class="layui-form-label" style="width:60px;">支付类型</label>
+				<div class="layui-input-inline" style="width:120px;">
+					<select id="s_mtype_id" name="s_mtype_id">
+						<option value="0">全部</option>
+						[[foreach from=$mtype_arr item=vo key=skey]]
+						<option value="[[$vo.id]]">[[$vo.name]]</option>
+						[[/foreach]]
+					</select>
+				</div>
+			</div>
+			<div class="layui-inline">
+				<label class="layui-form-label">搜索团队</label>
+				<div class="layui-input-inline">
+				<input type="text" name="s_keyword2" id="s_keyword2" placeholder="请输入关键词" autocomplete="off" class="layui-input">
+				</div>
+			</div>
+			<div class="layui-inline">
+				<label class="layui-form-label">关键词</label>
+				<div class="layui-input-inline">
+				<input type="text" name="s_keyword" id="s_keyword" placeholder="请输入关键词" autocomplete="off" class="layui-input">
+				</div>
+			</div>
+			<div class="layui-inline">
+				<div class="layui-input-inline">
+				<span class="layui-btn" id="searchBtn">查询</span>
+				<!--<span class="layui-btn layui-btn-danger">导出</span>-->
+				</div>
+			</div>
+		</div>
+	</form>
+	
+
+	<table class="layui-table">
+		<tbody id="tjBox">
+
+		</tbody>
+	</table>
+	<div style="height:300px;"></div>
+	
+  </div>
+</div>
+
+<script>
+$('#searchBtn').on('click',function(){
+	var obj=$(this);
+	var pdata={
+		s_keyword:$.trim($('#s_keyword').val()),
+		s_keyword2:$.trim($('#s_keyword2').val()),
+		s_mtype_id:$.trim($('#s_mtype_id').val()),
+		s_start_time:$.trim($('#s_start_time').val()),
+		s_end_time:$.trim($('#s_end_time').val())
+	};
+	ajax({
+		url:global.appurl+'c=User&a=datatj_list',
+		data:pdata,
+		success:function(json){
+			if(json.code!=1){
+				_alert(json.msg);
+				return;
+			}
+			var data=json.data;
+			var html='';
+			html+='<tr style="background:#f1f1f2;">';
+			  html+='<th>订单总数</th>';
+			  html+='<th>订单总额</th>';
+			  [[if $admin]]
+			  html+='<th>总手续费</th>';
+			  [[else]]
+			  html+='<th>/</th>';
+			  [[/if]]
+			  html+='<th>昨日统计</th>';
+			  html+='<th>成功订单数</th>';
+			  html+='<th>成功订单总额</th>';
+			  [[if $admin]]
+			  html+='<th>成功手续费</th>';
+			  [[else]]
+			  html+='<th>/</th>';
+			  [[/if]]
+			  html+='<th>订单成功率</th>';
+			  [[if $admin]]
+			  html+='<th style="font-weight:bold;">利润</th>';
+			  [[else]]
+			  html+='<th>/</th>';
+			  [[/if]]
+			html+='</tr>';
+			html+='<tr>';
+				html+='<td>'+json.data.od_sum_cnt+'</td>';
+				html+='<td>'+json.data.od_sum_money+'</td>';
+				[[if $admin]]
+				html+='<td>'+json.data.od_sum_fee+'</td>';
+				[[else]]
+				html+='<td></td>';
+				[[/if]]
+				html+='<td>￥<b>'+data.od_ok_money_ytoday+'</b> / <b>'+data.od_all_money_ytoday+'</b>，<b>'+data.od_ok_cnt_ytoday+'</b> / <b>'+data.od_all_cnt_ytoday+'</b>单，成功率：<b>'+data.od_ytdpercent+'</b></td>';
+				html+='<td>'+json.data.od_ok_cnt+'</td>';
+				html+='<td>'+json.data.od_ok_money+'</td>';
+				[[if $admin]]
+				html+='<td>'+json.data.od_ok_fee+'</td>';
+				[[else]]
+				html+='<td></td>';
+				[[/if]]
+				html+='<td>'+json.data.od_ok_percent+'%</td>';
+				[[if $admin]]
+				html+='<td>'+json.data.profit+'</td>';
+				[[else]]
+				html+='<td></td>';
+				[[/if]]
+			html+='</tr>';
+			
+			html+='<tr><td colspan="9">&nbsp;</td></tr>';
+			
+			html+='<tr style="background:#f1f1f2;">';
+			html+='<th>卡商充值</th>';
+			html+='<th>卡商提现</th>';
+			html+='<th>商户提现</th>';
+			html+='<th>今日统计</th>';
+			html+='<th>卡商余额</th>';
+			html+='<th>卡商冻结</th>';
+			html+='<th>商户余额</th>';
+			html+='<th>商户冻结</th>';
+			//html+='<th>卡余额</th>';
+			html+='<th>/</th>';
+			html+='</tr>';
+			
+			html+='<tr>';
+				html+='<td>'+json.data.ms_pay_money+'</td>';
+				html+='<td>'+json.data.ms_cash_money+'</td>';
+				html+='<td>'+json.data.sh_cash_money+'</td>';
+				html+='<td>￥<b>'+data.od_ok_money_today+'</b> / <b>'+data.od_all_money_today+'</b>，<b>'+data.od_ok_cnt_today+'</b> / <b>'+data.od_all_cnt_today+'</b>单，成功率：<b>'+data.od_tdpercent+'</b></td>';
+				html+='<td>'+json.data.ms_balance+'</td>';
+				html+='<td>'+json.data.ms_fz_balance+'</td>';
+				html+='<td>'+json.data.sh_balance+'</td>';
+				html+='<td>'+json.data.sh_fz_balance+'</td>';
+				//html+='<td>'+json.data.card_money+'</td>';
+				html+='<td></td>';
+			html+='</tr>';
+			
+			html+='<tr><td colspan="9">&nbsp;</td></tr>';
+			html+='<tr style="background:#f1f1f2;">';
+			html+='<th colspan="3">15分钟统计</th>';
+			html+='<th colspan="1">30分钟统计</th>';
+			html+='<th colspan="5">60分钟统计</th>';
+			html+='</tr>';
+			
+			html+='<tr>';
+				html+='<td colspan="3">￥<b>'+data.m15_ok.money+'</b> / <b>'+data.m15_all.money+'</b>，<b>'+data.m15_ok.cnt+'</b> / <b>'+data.m15_all.cnt+'</b>单，成功率：<b>'+data.m15_percent+'</b></td>';
+				html+='<td colspan="1">￥<b>'+data.m30_ok.money+'</b> / <b>'+data.m30_all.money+'</b>，<b>'+data.m30_ok.cnt+'</b> / <b>'+data.m30_all.cnt+'</b>单，成功率：<b>'+data.m30_percent+'</b></td>';
+				html+='<td colspan="5">￥<b>'+data.m60_ok.money+'</b> / <b>'+data.m60_all.money+'</b>，<b>'+data.m60_ok.cnt+'</b> / <b>'+data.m60_all.cnt+'</b>单，成功率：<b>'+data.m60_percent+'</b></td>';
+			html+='</tr>';
+			
+			$('#tjBox').html(html);
+		}
+	});
+});
+
+$('#searchBtn').trigger('click');
+
+$('#s_keyword').on('keyup',function(e){
+	if(e.keyCode==13){
+		$('#searchBtn').trigger('click');
+	}
+});
+</script>
